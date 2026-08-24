@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { db } from "./db";
+import { getDb, ensureSchema } from "./db";
 
 export type User = {
   id: number;
@@ -30,18 +30,25 @@ export function validatePassword(password: string): string | null {
   return null;
 }
 
-export function getUserByUsername(username: string): User | undefined {
+export async function getUserByUsername(username: string): Promise<User | undefined> {
+  await ensureSchema();
   const normalized = normalizeUsername(username);
-  return db
-    .prepare("SELECT * FROM users WHERE LOWER(username) = ?")
-    .get(normalized) as User | undefined;
+  const result = await getDb().execute({
+    sql: "SELECT * FROM users WHERE LOWER(username) = ?",
+    args: [normalized],
+  });
+  return result.rows[0] as unknown as User | undefined;
 }
 
-export function createUser(username: string, password: string): User {
+export async function createUser(username: string, password: string): Promise<User> {
+  await ensureSchema();
   const normalized = normalizeUsername(username);
   const passwordHash = bcrypt.hashSync(password, 10);
-  db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(normalized, passwordHash);
-  return getUserByUsername(normalized) as User;
+  await getDb().execute({
+    sql: "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+    args: [normalized, passwordHash],
+  });
+  return (await getUserByUsername(normalized)) as User;
 }
 
 export function verifyPassword(user: User, password: string): boolean {

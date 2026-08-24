@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 });
   }
 
-  const user = getUserByUsername(username);
+  const user = await getUserByUsername(username);
   if (!user || !verifyPassword(user, password)) {
     return NextResponse.json(
       { ok: false, error: "Incorrect username or password." },

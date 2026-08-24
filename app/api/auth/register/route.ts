@@ -25,14 +25,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: passwordError }, { status: 400 });
   }
 
-  if (getUserByUsername(normalizedUsername)) {
+  if (await getUserByUsername(normalizedUsername)) {
     return NextResponse.json(
       { ok: false, error: "That username is already taken." },
       { status: 409 }
     );
   }
 
-  const user = createUser(normalizedUsername, password);
+  const user = await createUser(normalizedUsername, password);
 
   const res = NextResponse.json({ ok: true, username: user.username });
   res.cookies.set("uniabuja-session", user.username, {
